@@ -54,12 +54,12 @@ scatter(posX_B,posY_B);
 [coeffYA,S_YA] = polyfit(t_A,posY_A,1); %find the coefficients of the linear line of best fit
 
 %coeff for f(x,t)
-bXA = coeffXA(1);
-mXA = coeffXA(2);
+bXA = coeffXA(2);
+mXA = coeffXA(1);
 
 %coeff for f(y,t)
-bYA = coeffYA(1);
-mYA = coeffYA(2);
+bYA = coeffYA(2);
+mYA = coeffYA(1);
 
 %t_fitA = linspace(min(t_A),max(t_A),length(t_A));
 
@@ -78,12 +78,12 @@ legend('p(x)_a vs. t_{fitA}','p(y)_a vs. t_{fitA}','p(y)_a vs. p(x)_a','Location
 [coeffYB,S_YB] = polyfit(t_B,posY_B,1); %find the coefficients of the linear line of best fit
 
 %coeff for f(x,t)
-bXB = coeffXB(1);
-mXB = coeffXB(2);
+bXB = coeffXB(2);
+mXB = coeffXB(1);
 
 %coeff for f(y,t)
-bYB = coeffYB(1);
-mYB = coeffYB(2); 
+bYB = coeffYB(2);
+mYB = coeffYB(1); 
 
 %t_fitB = linspace(min(t_B),max(t_B),length(t_B));
 
@@ -104,7 +104,7 @@ hold on;
 plot(f_XA,f_YA);
 plot(f_XB,f_YB);
 
-upper_Time = max(t_A)+max(t_B); %extend the timeframe
+upper_Time = max(t_A) + max(t_B); %extend the timeframe
 
 predictionTime = (min(t_A):upper_Time); %set up a new domain for extrapolatiomn
 [extrap_fitXA,deltaXA] = polyval(coeffXA, predictionTime,S_XA); %extract the extrapolated line of best fit with extrapolated values with the associated error
@@ -127,13 +127,9 @@ dV = mYB - mYA;
 for i = 1:length(predictionTime)
     dX(i) = extrap_fitXB(i) - extrap_fitXA(i); %xB - xA
     dY(i) = extrap_fitYB(i) - extrap_fitYA(i); %yB - yA 
-    D_t(i) = norm([dX, dY]); %"dummy" array
+    D_t(i) = norm([dX(i), dY(i)]); %"dummy" array
 
-    dD(i) = (dX(i).*(dU))+(dY(i).*(dV))./(D_t(i));
-
-    if dD(i) < 0.15 && dD(i) > -0.15
-        disp(i);
-    end
+    dD(i) = (dX(i).*(dU) + dY(i).*(dV)) ./ (D_t(i));
 end
 
 figure();
@@ -146,25 +142,26 @@ yline(0);
 
 %% Compute T_CA
 
-xA_0 = posX_A(1);
-yA_0 = posY_A(1);
+xA_0 = bXA;
+yA_0 = bYA;
 
-xB_0 = posX_B(1);
-yB_0 = posY_B(1);
+xB_0 = bXB;
+yB_0 = bYB;
 
 dX_0 = xB_0 - xA_0;
 dY_0 = yB_0 - yA_0;
 
-t_CA = dX_0 .* dU + dY_0 *dV ./ (dU .^2 + dV .^ 2);
+t_CA = (-(dX_0 .* dU) - (dY_0 .* dV)) ./ ((dU .^2) + (dV .^ 2));
 disp(t_CA);
+
 
 %% Compute position at T_CA
 
-xA_tCA = bXA + mXA * (t_CA + min(predictionTime));
-yA_tCA = bYA + mYA * (t_CA + min(predictionTime));
+xA_tCA = polyval(coeffXA,t_CA);
+yA_tCA = polyval(coeffYA,t_CA);
 
-xB_tCA = bXB + mXB * (t_CA + min(predictionTime));
-yB_tCA = bYB + mYB * (t_CA + min(predictionTime));
+xB_tCA = polyval(coeffXB,t_CA);
+yB_tCA = polyval(coeffYB,t_CA);
 
 dx_tCA = xB_tCA - xA_tCA;
 dy_tCA = yB_tCA - yA_tCA;
@@ -173,3 +170,6 @@ unnormed = [dx_tCA dy_tCA];
 d_tCA = norm(unnormed);
 
 disp(d_tCA);
+dD_tCA = (dx_tCA .*(dU) + dy_tCA.* (dV)) ./ (d_tCA);
+disp(dD_tCA);
+
