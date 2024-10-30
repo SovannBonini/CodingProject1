@@ -142,7 +142,6 @@ yline(0);
 
 %% Compute T_CA
 
-%Also values to use in partial
 xA_0 = bXA;
 yA_0 = bYA;
 
@@ -185,54 +184,48 @@ yA0 = yA_0;
 xB0 = xB_0;
 yB0 = yB_0;
 
+%{
+delta_uA = deltaXA(620 - min(predictionTime) + 1) .* sqrt((1 ./ length(predictionTime)) + ((t_CA - mean(predictionTime)).^2 ./ (sum((predictionTime - mean(predictionTime)).^2))));
+delta_vA = deltaYA(620 - min(predictionTime) + 1) .* sqrt((1 ./ length(predictionTime)) + ((t_CA - mean(predictionTime)).^2 ./ (sum((predictionTime - mean(predictionTime)).^2))));
+delta_uB = deltaXB(620 - min(predictionTime) + 1) .* sqrt((1 ./ length(predictionTime)) + ((t_CA - mean(predictionTime)).^2 ./ (sum((predictionTime - mean(predictionTime)).^2))));
+delta_vB = deltaYB(620 - min(predictionTime) + 1) .* sqrt((1 ./ length(predictionTime)) + ((t_CA - mean(predictionTime)).^2 ./ (sum((predictionTime - mean(predictionTime)).^2))));
+%}
 
+Delta = length(predictionTime)*sum(predictionTime.^2) - sum(predictionTime) ^2;
+
+delta_uA = deltaXA(1) * sqrt((length(predictionTime))/(Delta));
+delta_vA = deltaYA(1) * sqrt((length(predictionTime))/(Delta));
+delta_uB = deltaXB(1) * sqrt((length(predictionTime))/(Delta));
+delta_vB = deltaYB(1) * sqrt((length(predictionTime))/(Delta));
 
 % 1. Partial derivative with respect to xA,0
-dxA0 = (uB - uA) / ((uB - uA)^2 + (vB - vA)^2);
+dxA0 = (uB - uA) ./ ((uB - uA).^2 + (vB - vA) .^2);
 
 % 2. Partial derivative with respect to yA,0
-dyA0 = (vB - vA) / ((uB - uA)^2 + (vB - vA)^2);
+dyA0 = (vB - vA) ./ ((uB - uA).^2 + (vB - vA) .^2);
 
 % 3. Partial derivative with respect to xB,0
-dxB0 = -(uB - uA) / ((uB - uA)^2 + (vB - vA)^2);
+dxB0 = -(uB - uA) ./ ((uB - uA).^2 + (vB - vA) .^2);
 
 % 4. Partial derivative with respect to yB,0
-dyB0 = -(vB - vA) / ((uB - uA)^2 + (vB - vA)^2);
+dyB0 = -(vB - vA) ./ ((uB - uA).^2 + (vB - vA) .^2);
 
 % 5. Partial derivative with respect to uA
-duA = ((xB0 - xA0) * (-1) - 2 * (uB - uA) * (- (xB0 - xA0) * (uB - uA) - (yB0 - yA0) * (vB - vA))) / ((uB - uA)^2 + (vB - vA)^2)^2;
+duA = ((xB0 - xA0) .* ((vB - vA).^2 -(uA - uB).^2) - 2 .* (uB - uA) .* (yB0 - yA0) .* (vB - vA)) ./ (((uB - uA).^2 + (vB - vA).^2).^2);
 
 % 6. Partial derivative with respect to vA
-dvA = ((yB0 - yA0) * (-1) - 2 * (vB - vA) * (- (xB0 - xA0) * (uB - uA) - (yB0 - yA0) * (vB - vA))) / ((uB - uA)^2 + (vB - vA)^2)^2;
+dvA = ((yB0 - yA0) .* ((vB - vA).^2 -(uA - uB).^2) - 2 .* (uB - uA) .* (xB0 - xA0) .* (vB - vA)) ./ (((uB - uA).^2 + (vB - vA).^2).^2);
 
 % 7. Partial derivative with respect to uB
-duB = ((xB0 - xA0) - 2 * (uB - uA) * (- (xB0 - xA0) * (uB - uA) - (yB0 - yA0) * (vB - vA))) / ((uB - uA)^2 + (vB - vA)^2)^2;
+duB = ((xB0 - xA0) .* ((uA - uB).^2 - (vB - vA).^2) + 2 .* (uB - uA) .* (yB0 - yA0) .* (vB - vA)) ./ (((uB - uA).^2 + (vB - vA).^2).^2);
 
 % 8. Partial derivative with respect to vB
-dvB = ((yB0 - yA0) - 2 * (vB - vA) * (- (xB0 - xA0) * (uB - uA) - (yB0 - yA0) * (vB - vA))) / ((uB - uA)^2 + (vB - vA)^2)^2;
-
+dvB = ((yB0 - yA0) .* ((uA - uB).^2 - (vB - vA).^2) + 2 .* (uB - uA) .* (xB0 - xA0) .* (vB - vA)) ./ (((uB - uA).^2 + (vB - vA).^2).^2);
 
 %delta_t_cA using the error propagation formula
-
 
 %Need to add in proper values for delta_uA, delta_vA, delta_uB, and
 %delta_vB
 
-delta_tcA = sqrt((dxA0 * S_XA)^2 + (dyA0 * S_YA)^2 + (dxB0 * S_XB)^2 + (dyB0 * S_YB)^2 + (duA * delta_uA)^2 + (dvA * delta_vA)^2 + (duB * delta_uB)^2 + (dvB * delta_vB)^2); 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+delta_tcA = sqrt((dxA0 .* deltaXA(1)).^2 + (dyA0 .* deltaYA(1)).^2 + (dxB0 .* deltaXB(1)).^2 + (dyB0 .* deltaYB(1)).^2 + (duA .* delta_uA).^2 + (dvA .* delta_vA).^2 + (duB .* delta_uB).^2 + (dvB .* delta_vB).^2); 
+disp(delta_tcA);
